@@ -6,6 +6,9 @@ const countries = require('country-json/src/country-by-population.json');
 const getStats = () => fetch('https://pomber.github.io/covid19/timeseries.json')
   .then(res => res.json());
 const percentageOf = (total, portion) => parseFloat((portion / total) * 100).toFixed(2);
+const findLastNumber = (countryStats, statistic) => (countryStats.sort(({ date: a }, { date: b }) => new Date(b) - new Date(a))
+  .find(dayStat => dayStat[statistic] !== null && dayStat[statistic] !== undefined) || {})[statistic];
+const getPopulation = countryName => (countries.find(({ country }) => country === (countryName == 'US' ? 'United States' : countryName)) || {}).population;
 
 function App() {
   const [ loading, setLoading ] = useState(false);
@@ -44,10 +47,10 @@ function App() {
     <tbody>
       {Object.keys(stats).map(countryName => {
         const countryStats = stats[countryName];
-        const confirmed = countryStats.reduce((n, { confirmed }, i) => n += confirmed, 0);
-        const deaths = countryStats.reduce((n, { deaths }, i) => n += deaths, 0);
-        const recovered = countryStats.reduce((n, { recovered }, i) => n += recovered, 0);
-        const population = (countries.find(({ country }) => country === countryName) || {}).population;
+        const confirmed = findLastNumber(countryStats, 'confirmed');
+        const deaths = findLastNumber(countryStats, 'deaths');
+        const recovered = findLastNumber(countryStats, 'recovered');
+        const population = getPopulation(countryName);
         const confirmedPercentageOfPopulation = percentageOf(population, confirmed);
         const deathsPercentageOfConfirmed = percentageOf(confirmed, deaths);
         const recoveredPercentageOfConfirmed = percentageOf(confirmed, recovered);
@@ -55,12 +58,14 @@ function App() {
         return (
           <tr>
             <td className="country-name">{countryName}</td>
-            <td className={confirmedPercentageOfPopulation > 1 ? 'highlight' : ''}>{confirmed.toLocaleString()}<br />
-              {population && <small>{confirmedPercentageOfPopulation}% of population</small>}</td>
-            <td className={deathsPercentageOfConfirmed > 5 ? 'highlight' : ''}>{deaths.toLocaleString()}<br />
-            <small>{deathsPercentageOfConfirmed}% of confirmed cases</small></td>
-            <td className={recoveredPercentageOfConfirmed > 5 ? 'positive' : ''}>{recovered.toLocaleString()}<br />
-            <small>{recoveredPercentageOfConfirmed}% of confirmed cases</small></td>
+            <td className={confirmedPercentageOfPopulation > 0.5 ? 'highlight' : ''}>{confirmed.toLocaleString()}<br />
+              {population ? <small>{confirmedPercentageOfPopulation}% of population</small> : ''}</td>
+            {Number.isInteger(deaths) ? 
+              <td className={deathsPercentageOfConfirmed > 5 ? 'highlight' : ''}>{deaths.toLocaleString()}<br />
+                <small>{deathsPercentageOfConfirmed}% of confirmed cases</small></td> : ''}
+            {Number.isInteger(recovered) ? 
+              <td className={recoveredPercentageOfConfirmed > 5 ? 'positive' : ''}>{recovered.toLocaleString()}<br />
+                <small>{recoveredPercentageOfConfirmed}% of confirmed cases</small></td> : ''}
           </tr>
         )
       })}
