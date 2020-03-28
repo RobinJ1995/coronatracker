@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Container from '@material-ui/core/Container';
 import Paper from '@material-ui/core/Paper';
 import Grid from '@material-ui/core/Grid';
+import Spinner from 'react-md-spinner';
 import './App.css';
 import Chart from './Chart';
 const countries = require('country-json/src/country-by-population.json');
@@ -32,7 +33,18 @@ function App() {
   });
 
   if (loading) {
-    return <p>Loading...</p>;
+    const minDist = Math.min(window.innerWidth, window.innerHeight);
+			
+    return <Spinner
+      size={minDist / 5}
+      color1={'royalblue'}
+      color2={'red'}
+      color3={'green'}
+      color4={'black'}
+      style={{
+        margin: minDist / 10,
+      }}
+    />;
   } else if (error) {
     return <p>{error}</p>
   } else if (!stats) {
@@ -69,7 +81,7 @@ function App() {
                   </Grid>
                   <Grid item xs={4} md={12}>
                     {Number.isInteger(recovered) ? 
-                      <td className={recoveredPercentageOfConfirmed > 5 ? 'positive' : ''}>{recovered.toLocaleString()} deaths<br />
+                      <td className={recoveredPercentageOfConfirmed > 5 ? 'positive' : ''}>{recovered.toLocaleString()} recoveries<br />
                         <small>{recoveredPercentageOfConfirmed}% of confirmed cases</small></td> : ''}
                   </Grid>
                 </Grid>
